@@ -24,6 +24,6 @@ app.use(urlencoded({ extended: true }));
 app.use("/user", userController);
 app.use("/lib", libController);
 
-app.listen(3000, () => {
-  console.log("The server listening on port 3000");
+app.listen(process.env.SERVER_PORT, () => {
+  console.log(`The server listening on port ${process.env.SERVER_PORT}`);
 });

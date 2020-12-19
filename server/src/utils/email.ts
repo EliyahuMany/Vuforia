@@ -2,8 +2,8 @@ import mailer from "nodemailer";
 
 const transporter = mailer.createTransport({
   pool: true,
-  host: "smtp.live.com",
-  port: 25,
+  host: <string>process.env.EMAIL_HOST,
+  port: +(<string>process.env.EMAIL_PORT),
   secure: false,
   auth: {
     user: process.env.EMAIL,

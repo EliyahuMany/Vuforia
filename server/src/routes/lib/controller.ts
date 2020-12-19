@@ -78,7 +78,7 @@ async function getLibs(req: Request, res: Response, next: NextFunction) {
   if (req.body.userId) {
     const libs = await findByOwnerId(req.body.userId).catch((err) => console.log(err));
     if (isArray(libs)) {
-      res.status(200).json(libs);
+      res.status(200).json(libs.map((lib) => formatOutputLib(<Lib>lib)));
     }
   } else {
     res.status(401).send();
