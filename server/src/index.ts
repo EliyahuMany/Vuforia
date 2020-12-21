@@ -1,16 +1,16 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import cors from "cors";
 import mongoose from "mongoose";
 import { json, urlencoded } from "body-parser";
 import userController from "./routes/user/controller";
 import libController from "./routes/lib/controller";
 import { verify } from "./utils/email";
+import cors from "cors";
 
 const app = express();
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(cookieParser());
-app.use(cors());
 dotenv.config();
 verify(); // verify email service work
 

@@ -10,7 +10,6 @@ import {
   sendNextEmail,
 } from "./handler";
 import { Lib, EmailStatus } from "../../schemes/libScheme";
-import { isArray, isString } from "util";
 const router: express.Router = express.Router();
 
 router.post("/create", verifyAccessToken, findLib, createLib, nextEmail);
@@ -21,10 +20,10 @@ async function verifyEmail(req: Request, res: Response, next: NextFunction) {
   if (req.query && req.query.libId && req.query.emailId) {
     return updateEmailStatus(<string>req.query.emailId, EmailStatus.Pending)
       .then((verified) => {
-        if (!isString(verified)) {
+        if (typeof verified !== "string") {
           req.body.libId = req.query.libId;
           next();
-          res.status(200).send("Approved");
+          return res.status(200).send("Approved");
         }
       })
       .catch((err) => res.status(406).send());
@@ -35,8 +34,8 @@ async function verifyEmail(req: Request, res: Response, next: NextFunction) {
 
 async function nextEmail(req: Request, res: Response, next: NextFunction) {
   if (req.body.libId) {
-    sendNextEmail(<string>req.body.libId).catch((res) => console.log(res));
-    next();
+    sendNextEmail(<string>req.body.libId).catch((err) => console.log(err));
+    return next();
   } else {
     return res.status(400).send();
   }
@@ -77,7 +76,7 @@ async function createLib(req: Request, res: Response, next: NextFunction) {
 async function getLibs(req: Request, res: Response, next: NextFunction) {
   if (req.body.userId) {
     const libs = await findByOwnerId(req.body.userId).catch((err) => console.log(err));
-    if (isArray(libs)) {
+    if (Array.isArray(libs)) {
       res.status(200).json(libs.map((lib) => formatOutputLib(<Lib>lib)));
     }
   } else {

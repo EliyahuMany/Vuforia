@@ -1,7 +1,6 @@
 import LibModel, { Lib, EmailStatus, EmailObject } from "../../schemes/libScheme";
 import { CallbackError, Document, Types } from "mongoose";
-import { verify, sendEmail } from "../../utils/email";
-import { isString } from "util";
+import { sendEmail } from "../../utils/email";
 
 export async function sendNextEmail(libId: string) {
   return new Promise((resolve, reject) => {
@@ -16,11 +15,13 @@ export async function sendNextEmail(libId: string) {
 
               updateEmailStatus(<string>email._id, EmailStatus.Wait)
                 .then((res) => {
-                  if (!isString(res)) {
-                    resolve("succeeded");
+                  if (typeof res !== "string") {
+                    return resolve("succeeded");
+                  } else {
+                    reject("something went wrong!");
                   }
                 })
-                .catch((res) => console.log(res));
+                .catch((err) => console.log(err));
 
               break;
             }
@@ -28,7 +29,6 @@ export async function sendNextEmail(libId: string) {
         }
       })
       .catch((err) => console.log(err));
-    reject("something went wrong!");
   });
 }
 
@@ -42,7 +42,6 @@ export async function updateEmailStatus(
       { "emails.$.status": currStatus + 1 },
       { upsert: true },
       (err: CallbackError, doc: Document) => {
-        console.log(doc);
         if (err) {
           reject("the library dosen't exists");
         }
