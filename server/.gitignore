@@ -3,6 +3,7 @@
 
 # production
 /dist
+.DS_Store
 
 # env
 .env
