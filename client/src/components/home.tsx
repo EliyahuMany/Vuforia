@@ -23,7 +23,7 @@ const Home = () => {
   const history = useHistory();
   const [libs, setLibs] = useState<Array<ILib>>([]);
 
-  useEffect(() => getLibsCaller(), []);
+  useEffect(() => getLibsCaller(), [auth.user]);
 
   const getLibsCaller = () => {
     getLibs().then((res) => {

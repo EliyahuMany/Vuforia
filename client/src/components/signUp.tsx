@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
@@ -8,6 +8,8 @@ import { AxiosResponse, AxiosError } from "axios";
 import { useAuth } from "../utils/auth";
 import { useHistory } from "react-router-dom";
 import { signup } from "../utils/api";
+import { useFormik } from "formik";
+import * as yup from "yup";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -30,16 +32,27 @@ export default function SignUp() {
   const classes = useStyles();
   const history = useHistory();
   const auth = useAuth();
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [emailInput, setEmailInput] = useState<string>("");
-  const [emailError, setEmailError] = useState<string | undefined>();
-  const [passwordInput, setPasswordInput] = useState<string>("");
 
-  const submitHandler = (e: any) => {
-    e.preventDefault();
-    if (firstName.length && lastName.length && emailInput.length && passwordInput.length) {
-      signup(firstName, lastName, emailInput, passwordInput)
+  const validationSchema = yup.object({
+    email: yup.string().email("Enter a valid email").required("Email is required"),
+    password: yup.string().min(8, "Password should be of minimum 8 characters length").required("Password is required"),
+    firstName: yup
+      .string()
+      .min(2, "First name should be of minimum 2 characters length")
+      .required("First name is required"),
+    lastName: yup.string().min(2, "Last name should be of minimum 2 characters length").required("Last is required"),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+    },
+    validationSchema: validationSchema,
+    onSubmit: ({ firstName, lastName, email, password }, { setFieldError }) => {
+      signup(firstName, lastName, email, password)
         .then((res: AxiosResponse) => {
           if (res && res.data) {
             auth.signin(res.data);
@@ -48,11 +61,11 @@ export default function SignUp() {
         })
         .catch((error: AxiosError) => {
           if (error.response?.status === 409) {
-            setEmailError("Email already in use");
+            setFieldError("email", "Email already in use");
           }
         });
-    }
-  };
+    },
+  });
 
   return (
     <Container component="main" maxWidth="xs">
@@ -60,13 +73,10 @@ export default function SignUp() {
         <Typography component="h1" variant="h5">
           Sign up
         </Typography>
-        <form className={classes.form} onSubmit={submitHandler} noValidate>
+        <form className={classes.form} onSubmit={formik.handleSubmit} noValidate>
           <TextField
-            value={firstName}
-            onChange={(e) => {
-              e.preventDefault();
-              setFirstName(e.target.value);
-            }}
+            value={formik.values.firstName}
+            onChange={formik.handleChange}
             variant="outlined"
             margin="normal"
             required
@@ -76,13 +86,12 @@ export default function SignUp() {
             type="text"
             id="firstName"
             autoFocus
+            error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+            helperText={formik.touched.firstName && formik.errors.firstName}
           />
           <TextField
-            value={lastName}
-            onChange={(e) => {
-              e.preventDefault();
-              setLastName(e.target.value);
-            }}
+            value={formik.values.lastName}
+            onChange={formik.handleChange}
             variant="outlined"
             margin="normal"
             required
@@ -91,16 +100,14 @@ export default function SignUp() {
             label="Last Name"
             type="text"
             id="lastName"
+            error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+            helperText={formik.touched.lastName && formik.errors.lastName}
           />
           <TextField
-            value={emailInput}
-            onChange={(e) => {
-              e.preventDefault();
-              setEmailError(undefined);
-              setEmailInput(e.target.value);
-            }}
-            error={emailError !== undefined}
-            helperText={emailError ? emailError : null}
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            error={formik.touched.email && Boolean(formik.errors.email)}
+            helperText={formik.touched.email && formik.errors.email}
             variant="outlined"
             margin="normal"
             required
@@ -111,11 +118,8 @@ export default function SignUp() {
             autoComplete="email"
           />
           <TextField
-            value={passwordInput}
-            onChange={(e) => {
-              e.preventDefault();
-              setPasswordInput(e.target.value);
-            }}
+            value={formik.values.password}
+            onChange={formik.handleChange}
             variant="outlined"
             margin="normal"
             required
@@ -125,6 +129,8 @@ export default function SignUp() {
             type="password"
             id="password"
             autoComplete="current-password"
+            error={formik.touched.password && Boolean(formik.errors.password)}
+            helperText={formik.touched.password && formik.errors.password}
           />
           <Button type="submit" fullWidth variant="contained" color="primary" className={classes.submit}>
             Sign Up

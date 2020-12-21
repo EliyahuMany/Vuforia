@@ -8,6 +8,8 @@ import { Grid, IconButton } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import { createLib } from "../utils/api";
 import { useHistory } from "react-router-dom";
+import { Field, FieldArray, Form, Formik } from "formik";
+import * as yup from "yup";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -38,33 +40,11 @@ const useStyles = makeStyles((theme) => ({
 export default function Add() {
   const classes = useStyles();
   const history = useHistory();
-  const [url, setUrl] = useState<string>("");
-  const [emailInput, setEmailInput] = useState<string>("");
-  const [emails, setEmails] = useState<Array<string>>([]);
 
-  const addEmailHandler = () => {
-    if (emailInput.length) {
-      setEmails((prev) => {
-        let temp = prev;
-        temp.push(emailInput);
-        return temp;
-      });
-      setEmailInput("");
-    }
-  };
-
-  const submitHandler = (e: any) => {
-    e.preventDefault();
-    if (url && emails.length) {
-      createLib(url, emails)
-        .then((res) => {
-          if (res.status === 201) {
-            history.push("/");
-          }
-        })
-        .catch((err) => console.log(err));
-    }
-  };
+  const validationSchema = yup.object({
+    url: yup.string().url("Enter a valid url").required("Url is required"),
+    emails: yup.array().of(yup.string().email("One of the emails is invalid").required("Email is required")),
+  });
 
   return (
     <Container component="main" maxWidth="xs">
@@ -72,52 +52,87 @@ export default function Add() {
         <Typography component="h1" variant="h5">
           Add new OS Library
         </Typography>
-        <form className={classes.form} onSubmit={submitHandler} noValidate>
-          <TextField
-            value={url}
-            onChange={(e) => {
-              e.preventDefault();
-              setUrl(e.target.value);
-            }}
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            name="libURL"
-            label="Library URL"
-            type="text"
-            id="libURL"
-            autoFocus
-          />
-          {emails.length ? <EmailItemField emails={emails} /> : null}
-          <Grid className={classes.addEmail}>
-            <Grid item md={10} xs={12}>
-              <TextField
-                value={emailInput}
-                onChange={(e) => {
-                  e.preventDefault();
-                  setEmailInput(e.target.value);
-                }}
-                variant="outlined"
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-              />
-            </Grid>
-            <Grid item md={2} xs={12} className={classes.addButton}>
-              <IconButton aria-label="add" onClick={() => addEmailHandler()}>
-                <AddIcon />
-              </IconButton>
-            </Grid>
-          </Grid>
-          <Button type="submit" fullWidth variant="contained" color="primary" className={classes.submit}>
-            Upload
-          </Button>
-        </form>
+        <Formik
+          initialValues={{ url: "", emails: [""] }}
+          validationSchema={validationSchema}
+          onSubmit={(values) => {
+            createLib(values.url, values.emails)
+              .then((res) => {
+                if (res.status === 201) {
+                  history.push("/");
+                }
+              })
+              .catch((err) => console.log(err));
+          }}
+        >
+          <Form className={classes.form}>
+            <Field name="url">
+              {(props: any) => {
+                return (
+                  <TextField
+                    variant="outlined"
+                    margin="normal"
+                    required
+                    fullWidth
+                    name="url"
+                    id="url"
+                    label="Library URL"
+                    type="text"
+                    autoFocus
+                    error={props.form.touched.url && Boolean(props.form.errors.url)}
+                    helperText={props.form.touched.url && props.form.errors.url}
+                    {...props.field}
+                  />
+                );
+              }}
+            </Field>
+            <FieldArray name="emails">
+              {({ form, ...fieldArrayHelpers }) => {
+                const onAddClick = () => {
+                  fieldArrayHelpers.push("");
+                };
+
+                return form.values.emails.map((field: any, index: number) => {
+                  const last = form.values.emails.length == index + 1;
+
+                  return (
+                    <Grid className={classes.addEmail}>
+                      <Grid item md={last ? 10 : 12} xs={12}>
+                        <TextField
+                          value={field}
+                          onChange={(e) => {
+                            fieldArrayHelpers.replace(index, e.target.value);
+                          }}
+                          variant="outlined"
+                          margin="normal"
+                          required
+                          fullWidth
+                          id={`emails.${index}`}
+                          label="Email Address"
+                          name={`emails.${index}`}
+                          autoComplete="email"
+                          error={form.touched.emails && Boolean(form.errors.emails)}
+                          helperText={form.touched.emails && form.errors.emails}
+                        />
+                      </Grid>
+                      {last ? (
+                        <Grid item md={2} xs={12} className={classes.addButton}>
+                          <IconButton aria-label="add" onClick={() => onAddClick()}>
+                            <AddIcon />
+                          </IconButton>
+                        </Grid>
+                      ) : null}
+                    </Grid>
+                  );
+                });
+              }}
+            </FieldArray>
+
+            <Button type="submit" fullWidth variant="contained" color="primary" className={classes.submit}>
+              Upload
+            </Button>
+          </Form>
+        </Formik>
       </div>
     </Container>
   );

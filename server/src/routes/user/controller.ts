@@ -57,6 +57,8 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
     if (user) {
       const userInfo = <User>user;
       req.body.userInfo = userInfo;
+      const token = generateAccessToken(userInfo.id);
+      res.cookie("token", token, { maxAge: +(<string>process.env.TOKEN_EXPIRE), httpOnly: true }); // secure: true in production
       res.status(201).send({ email: userInfo.email, firstname: userInfo.firstname, lastname: userInfo.lastname }); // Created
       next();
     }
