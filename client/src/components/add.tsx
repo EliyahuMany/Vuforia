@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
@@ -93,10 +93,11 @@ export default function Add() {
                 };
 
                 return form.values.emails.map((field: any, index: number) => {
-                  const last = form.values.emails.length == index + 1;
+                  const last = form.values.emails.length === index + 1;
 
                   return (
-                    <Grid className={classes.addEmail}>
+                    //can use key as index becuase it will not remove by itself
+                    <Grid className={classes.addEmail} key={index}>
                       <Grid item md={last ? 10 : 12} xs={12}>
                         <TextField
                           value={field}
@@ -112,7 +113,6 @@ export default function Add() {
                           name={`emails.${index}`}
                           autoComplete="email"
                           error={form.touched.emails && Boolean(form.errors.emails)}
-                          helperText={form.touched.emails && form.errors.emails}
                         />
                       </Grid>
                       {last ? (
@@ -137,27 +137,3 @@ export default function Add() {
     </Container>
   );
 }
-
-type ItemField = {
-  emails: string[];
-};
-
-const EmailItemField = ({ emails }: ItemField) => {
-  return (
-    <div>
-      {emails.map((email) => (
-        <TextField
-          key={email}
-          value={email}
-          disabled
-          variant="outlined"
-          margin="normal"
-          fullWidth
-          name={email}
-          type="email"
-          id={email}
-        />
-      ))}
-    </div>
-  );
-};
